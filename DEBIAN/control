@@ -1,0 +1,6 @@
+Package: gstat
+Version: 2.0
+Architecture: all
+Maintainer: tkdorfbb tkdorfbb@proton.me
+Description: A cool system monitor app
+Depends: python3, python3-psutil, python3-rich

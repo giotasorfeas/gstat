@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+
+import psutil
+from rich.console import Console
+from rich.live import Live
+from rich.panel import Panel
+from time import sleep
+
+def create_graph_bar(usage, total_bars=30):
+    """Create a text-based bar graph."""
+    usage = min(usage, 1)  # Ensure the usage doesn't go over 100%
+    filled_bars = int(usage * total_bars)
+    empty_bars = total_bars - filled_bars
+    return f"[green]{'█' * filled_bars}[/green][red]{'░' * empty_bars}[/red]"
+
+def get_cpu_and_ram_graph():
+    """Generate CPU and RAM graphs."""
+    cpu_usage = psutil.cpu_percent() / 100  # Normalize to 0-1
+    ram_info = psutil.virtual_memory()
+    ram_usage = ram_info.percent / 100  # Normalize to 0-1
+
+    cpu_graph = create_graph_bar(cpu_usage)
+    ram_graph = create_graph_bar(ram_usage)
+
+    # Ensure left-aligned names, right-aligned numbers, and bars stacked properly
+    return f"CPU      : {cpu_graph:<30} | {cpu_usage * 100:>5.1f}%\nRAM      : {ram_graph:<30} | {ram_usage * 100:>5.1f}%"
+
+def get_network_stats():
+    """Generate network upload and download speeds."""
+    net_io = psutil.net_io_counters()
+    bytes_sent = net_io.bytes_sent
+    bytes_recv = net_io.bytes_recv
+
+    # Calculate upload/download speeds (in MB)
+    upload_speed = bytes_sent / 1024 / 1024  # Convert to MB
+    download_speed = bytes_recv / 1024 / 1024  # Convert to MB
+
+    # Maximum speed for scaling the bars (in MB/s)
+    max_speed = 100  # Maximum scale for download/upload in MB/s)
+
+    # Normalize speeds into a 0-1 range based on max_speed
+    upload_speed_graph = create_graph_bar(upload_speed / max_speed)
+    download_speed_graph = create_graph_bar(download_speed / max_speed)
+
+    # Ensure left-aligned names, right-aligned numbers, and bars stacked properly
+    return f"Upload   : {upload_speed_graph:<30} | {upload_speed:>6.2f} MB/s\nDownload : {download_speed_graph:<30} | {download_speed:>6.2f} MB/s"
+
+def display_graphs():
+    """Continuously display CPU, RAM, and network graphs."""
+    with Live(refresh_per_second=2) as live:
+        while True:
+            # Align the bars one below the other without spaces between them
+            panel = Panel(get_cpu_and_ram_graph() + "\n" + get_network_stats(), title="[bold cyan]System Monitor[/bold cyan]")
+            live.update(panel)
+            sleep(1)
+
+if __name__ == "__main__":
+    display_graphs()
+
